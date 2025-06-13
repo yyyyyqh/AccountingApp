@@ -1,5 +1,6 @@
 package com.yqh.accountingapp.ui.features.main
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+import androidx.compose.foundation.clickable // 👈 新增 import
+import androidx.compose.runtime.* // 👈 新增 import
+import androidx.compose.material3.DropdownMenu // 👈 新增 import
+import androidx.compose.material3.DropdownMenuItem // 👈 新增 import
+
 
 // 这个数据类定义了交易列表“单行”所需的所有信息
 data class TransactionItem(
@@ -75,60 +85,165 @@ val dummyTransactions = listOf(
     )
 )
 
+private val groupedTransactions = mapOf(
+    "06 / 13 周五" to listOf(
+        TransactionItem(
+            icon = Icons.Filled.Restaurant,
+            color = Color(0xFF2196F3), // 蓝色
+            category = "三餐",
+            description = "午餐",
+            amount = "¥ 12.00"
+        ),
+        TransactionItem(
+            icon = Icons.Filled.Restaurant,
+            color = Color(0xFF2196F3),
+            category = "三餐",
+            description = "晚餐",
+            amount = "¥ 23.50"
+        )
+    ),
+    "06 / 12 周四" to listOf(
+        TransactionItem(
+            icon = Icons.Filled.ShoppingCart,
+            color = Color(0xFF4CAF50), // 绿色
+            category = "购物",
+            description = "充电模块",
+            amount = "¥ 39.96"
+        ),
+        TransactionItem(
+            icon = Icons.Filled.ShoppingCart,
+            color = Color(0xFF4CAF50),
+            category = "购物",
+            description = "鼠标保护壳",
+            amount = "¥ 12.90"
+        )
+    ),
+    // --- 以下是新添加的内容 ---
+    "06 / 11 周三" to listOf(
+        TransactionItem(
+            icon = Icons.Filled.DirectionsBus, // 用公交车图标代表交通
+            color = Color(0xFFFF9800), // 橙色
+            category = "交通",
+            description = "地铁",
+            amount = "¥ 4.00"
+        ),
+        TransactionItem(
+            icon = Icons.Filled.Theaters, // 用影院图标代表娱乐
+            color = Color(0xFFE91E63), // 粉色
+            category = "娱乐",
+            description = "电影票",
+            amount = "¥ 45.00"
+        ),
+        TransactionItem(
+            icon = Icons.Filled.Restaurant,
+            color = Color(0xFF2196F3),
+            category = "三餐",
+            description = "早餐",
+            amount = "¥ 8.50"
+        )
+    ),
+    "06 / 10 周二" to listOf(
+        TransactionItem(
+            icon = Icons.Filled.Home, // 用房子图标代表居家
+            color = Color(0xFF795548), // 棕色
+            category = "居家",
+            description = "水电费",
+            amount = "¥ 150.20"
+        )
+    )
+)
+
 @Composable
-fun SummaryCard() {
-    // Card 组件提供了一个带有圆角和阴影的 Material Design 卡片
+fun SummaryCard(balance: String, income: String, expense: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp), // 卡片距离屏幕边缘的间距
-        shape = MaterialTheme.shapes.large, // 使用大一点的圆角
+            .padding(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary // 背景色用主题的主颜色
+            // 👇 这里是我们修正后的颜色，直接指定了一个蓝色
+            containerColor = Color(0xFF2196F3)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
+        // 1. 添加状态来控制菜单的展开/收起和当前选中的标题
+        var menuExpanded by remember { mutableStateOf(false) }
+        var selectedTitle by remember { mutableStateOf("六月结余") }
+
+        // 准备好我们的菜单项列表
+        val menuItems = listOf(
+            "总结余 (总收入-总支出)",
+            "当日结余",
+            "当月结余",
+            "当年结余",
+            "净资产",
+            "总资产",
+            "总负债"
+        )
+
         Column(
-            modifier = Modifier
-                .padding(16.dp) // 卡片内部内容的间距
+            modifier = Modifier.padding(16.dp)
         ) {
-            // "六月结余" 和下拉箭头
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "六月结余", color = Color.White)
-                Icon(
-                    Icons.Default.ArrowDropDown,
-                    contentDescription = "选择月份",
-                    tint = Color.White
-                )
+            // 2. 使用 Box 包裹触发器，以便正确定位菜单
+            Box {
+                // "六月结余" 和下拉箭头，现在是菜单的触发器
+                Row(
+                    modifier = Modifier.clickable { menuExpanded = true }, // 3. 让 Row 可点击，用来展开菜单
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = selectedTitle, color = Color.White) // 使用 state 来显示标题
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = "选择结余类型",
+                        tint = Color.White
+                    )
+                }
+
+                // 4. 添加 DropdownMenu 组件
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false } // 当点击菜单外部时，收起菜单
+                ) {
+                    // 5. 遍历菜单项并创建 DropdownMenuItem
+                    menuItems.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item) },
+                            onClick = {
+                                // 6. 在 onClick 中更新状态并关闭菜单
+                                selectedTitle = item
+                                menuExpanded = false
+                                // TODO: 未来在这里添加根据选择更新下方金额的逻辑
+                            }
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp)) // 垂直间距
 
-            // 结余金额
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 结余金额 (暂时还是静态的)
             Text(
-                text = "-¥ 499",
-                fontSize = 32.sp, // 更大的字号
+                text = balance,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // 更大的垂直间距
-
-            // "月收入" 和 "月支出"
+            // ... 月收入和月支出的部分不变 ...
+            Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                // 月收入部分
                 SummaryItem(
                     title = "月收入",
-                    amount = "¥ 0",
+                    amount = income,
                     icon = Icons.Default.Add,
-                    modifier = Modifier.weight(1f) // 占据一半宽度
+                    modifier = Modifier.weight(1f)
                 )
-                // 月支出部分
                 SummaryItem(
                     title = "月支出",
-                    amount = "¥ 499",
-                    icon = Icons.Filled.Remove, // Material Icons 里没有横线，我们用 Remove 代替
-                    modifier = Modifier.weight(1f) // 占据另一半宽度
+                    amount = expense,
+                    icon = Icons.Filled.Remove,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -168,7 +283,6 @@ fun TransactionRow(item: TransactionItem, modifier: Modifier = Modifier) {
 }
 
 
-
 @Composable
 fun SummaryItem(title: String, amount: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
     Row(
@@ -203,7 +317,11 @@ fun SummaryItem(title: String, amount: String, icon: androidx.compose.ui.graphic
 fun SummaryCardPreview() {
     // 假设的主题包裹
     // AccountingAppTheme {
-    SummaryCard()
+    SummaryCard(
+        balance = "-¥ 499.00",
+        income = "¥ 0.00",
+        expense = "¥ 499.00"
+    )
     // }
 }
 
@@ -215,36 +333,35 @@ fun TransactionRowPreview() {
     TransactionRow(item = dummyTransactions[0])
 }
 
+
+// --- UI 组件 ---
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
-    // Scaffold 是 Material Design 的布局结构。
-    // 它为最常见的顶层 UI 组件提供了槽位，如 TopAppBar, FloatingActionButton 等。
+fun MainScreen(
+    onNavigateToAddTransaction: () -> Unit // 这是我们需要的、正确的 MainScreen 版本
+) {
     Scaffold(
         topBar = {
-            // 这里我们放置顶部的应用栏
             TopAppBar(
-                title = { Text("2025 / 06") }, // 暂时用静态文本
+                title = { Text("2025 / 06") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // 设置背景为主题的主颜色
-                    titleContentColor = Color.White // 设置标题文字为白色
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = Color.White
                 )
-                // 稍后我们会在这里添加汉堡菜单和搜索图标
             )
         },
         floatingActionButton = {
-            // 这里我们放置右下角的悬浮操作按钮
-            FloatingActionButton(onClick = { /* 暂时什么都不做 */ }) {
+            FloatingActionButton(onClick = onNavigateToAddTransaction) { // onClick 事件被正确设置
                 Icon(Icons.Filled.Add, contentDescription = "添加交易")
             }
         }
     ) { innerPadding ->
-        // 这是 Scaffold 的主内容区域。
-        // innerPadding 包含了顶栏等组件的高度，可以避免我们的内容被遮挡。
         MainContent(paddingValues = innerPadding)
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainContent(paddingValues: PaddingValues) {
     // 将 Box 改为 Column，因为之后我们还想在卡片下面放一个列表
@@ -254,16 +371,34 @@ fun MainContent(paddingValues: PaddingValues) {
             .fillMaxSize()
     ) {
         // 在这里调用我们刚刚创建的卡片组件
-        SummaryCard()
+        SummaryCard(
+            balance = "-¥ 499.00",
+            income = "¥ 0.00",
+            expense = "¥ 499.00"
+        )
 
-        // TODO: 之后在这里添加交易明细列表
-        // 使用 LazyColumn 来创建一个垂直滚动的列表
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            // items 是一个辅助函数，它会遍历你提供的数据列表
-            // 并为每一项数据调用你指定的 Composable 函数
-            items(items = dummyTransactions) { item ->
-                // 现在 lambda 表达式里的 `item` 就是我们想要的 TransactionItem 对象了
-                TransactionRow(item = item)
+
+            // 1. Iterate through each entry (date and list of transactions) in your map.
+            groupedTransactions.forEach { (date, transactionsOnThatDay) ->
+
+                // 2. For each date, create a "sticky header".
+                // This header will stick to the top as you scroll through its items.
+                stickyHeader {
+                    Text(
+                        text = date,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background) // Give it a background to cover items scrolling under it
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // 3. For the list of transactions associated with that date, create the item rows.
+                items(items = transactionsOnThatDay) { transaction ->
+                    TransactionRow(item = transaction)
+                }
             }
         }
     }
@@ -275,6 +410,6 @@ fun MainContent(paddingValues: PaddingValues) {
 fun MainScreenPreview() {
     // 建议在预览时包裹一层主题，以确保颜色、字体等样式正确
     // MaterialTheme { // 假设你有一个主题设置
-    MainScreen()
+    MainScreen(onNavigateToAddTransaction = {})
     // }
 }
