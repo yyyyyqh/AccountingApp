@@ -12,6 +12,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Fastfood
@@ -131,6 +135,40 @@ fun AddTransactionScreen(
                 }
             )
 
+            // 这个 Spacer 会占据所有剩余空间，把键盘推到底部
+            Spacer(modifier = Modifier.weight(1f))
+
+            // --- 自定义键盘 ---
+            CustomKeypad(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp), // 给键盘一个固定的高度
+                onDigitClick = { digit ->
+                    if (amount == "0") {
+                        amount = digit
+                    } else {
+                        amount += digit
+                    }
+                },
+                onBackspaceClick = {
+                    amount = amount.dropLast(1)
+                    if (amount.isEmpty()) {
+                        amount = "0"
+                    }
+                },
+                onDecimalClick = {
+                    if (!amount.contains(".")) {
+                        amount += "."
+                    }
+                },
+                onAddClick = { /* TODO */ },
+                onAttachmentClick = { /* TODO */ },
+                onSaveClick = {
+                    // TODO: 在这里处理保存逻辑
+                    onNavigateBack() // 点击保存后先返回主页
+                }
+            )
+
             // TODO: 在这里添加备注/图片、数字键盘和保存按钮
         }
     }
@@ -229,5 +267,75 @@ fun CategoryIcon(
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = category.name, fontSize = 12.sp)
+    }
+}
+
+@Composable
+fun KeypadButton(
+    // RowScope 是为了方便在 Row 中使用 weight 等修饰符
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .padding(4.dp)
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        content = {
+            Box(contentAlignment = Alignment.Center) {
+                content()
+            }
+        }
+    )
+}
+@Composable
+fun CustomKeypad(
+    modifier: Modifier = Modifier,
+    onDigitClick: (String) -> Unit,
+    onBackspaceClick: () -> Unit,
+    onDecimalClick: () -> Unit,
+    onAddClick: () -> Unit,
+    onAttachmentClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Column(modifier = modifier) {
+        // 第一行: 1, 2, 3, Backspace
+        Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("1") }) { Text("1", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("2") }) { Text("2", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("3") }) { Text("3", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = onBackspaceClick) { Icon(Icons.Default.Backspace, "删除") }
+        }
+        // 第二行: 4, 5, 6, +
+        Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("4") }) { Text("4", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("5") }) { Text("5", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("6") }) { Text("6", fontSize = 20.sp) }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = onAddClick) { Icon(Icons.Default.Add, "加") }
+        }
+        // 第三、四行
+        Row(modifier = Modifier.fillMaxWidth().weight(2f)) { // 这一行占据两倍高度
+            Column(modifier = Modifier.weight(3f)) { // 左侧 3/4 区域
+                Row(modifier = Modifier.weight(1f)) {
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("7") }) { Text("7", fontSize = 20.sp) }
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("8") }) { Text("8", fontSize = 20.sp) }
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("9") }) { Text("9", fontSize = 20.sp) }
+                }
+                Row(modifier = Modifier.weight(1f)) {
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = onAttachmentClick) { Icon(Icons.Default.Attachment, "附件") }
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("0") }) { Text("0", fontSize = 20.sp) }
+                    KeypadButton(modifier = Modifier.weight(1f), onClick = onDecimalClick) { Text(".", fontSize = 20.sp) }
+                }
+            }
+            // 右侧 1/4 区域，高高的“保存”按钮
+            KeypadButton(
+                modifier = Modifier.weight(1f).fillMaxHeight(), // 占据剩余宽度和所有高度
+                onClick = onSaveClick
+            ) {
+                Text("保存", fontSize = 20.sp)
+            }
+        }
     }
 }
