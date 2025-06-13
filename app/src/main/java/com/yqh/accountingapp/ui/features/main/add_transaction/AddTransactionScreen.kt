@@ -1,10 +1,13 @@
 // 文件路径: com/yqh/accountingapp/ui/features/add_transaction/AddTransactionScreen.kt
 package com.yqh.accountingapp.ui.features.add_transaction
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -52,7 +55,16 @@ val dummyCategories = listOf(
     Category("理发", Icons.Default.ContentCut, Color(0xFF607D8B)), // 假设有 ContentCut 图标
     Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
     Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
+    Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
+    Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
+    Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
+    Category("娱乐", Icons.Default.Movie, Color(0xFFE91E63)),
 )
+
+// 👇 1. 将分类列表切分成多个子列表，每个子列表包含10个分类，代表一页
+val paginatedCategories = dummyCategories.chunked(10)
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,8 +122,9 @@ fun AddTransactionScreen(
             Divider() // 分隔线
 
             // --- 分类选择器 ---
+            // 👇 把分页后的数据传进去
             CategorySelector(
-                categories = dummyCategories,
+                paginatedCategories = paginatedCategories,
                 selectedCategory = selectedCategory,
                 onCategorySelected = { category ->
                     selectedCategory = category
@@ -130,31 +143,58 @@ fun AddTransactionScreenPreview() {
     AddTransactionScreen(onNavigateBack = {})
 }
 
-@OptIn(ExperimentalLayoutApi::class) // 👈 1. 添加这个 OptIn 注解
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class) // 👈 2. 添加 Pager 的 OptIn
 @Composable
 fun CategorySelector(
-    categories: List<Category>,
+    // 注意：这里我们接收的是分页后的数据
+    paginatedCategories: List<List<Category>>,
     selectedCategory: Category,
     onCategorySelected: (Category) -> Unit
 ) {
-    // 横向滚动的列表
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        // 设置每个 item 之间的水平间距
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        // 设置每行最多显示多少个 item，可以根据你的设计调整
-        maxItemsInEachRow = 5
-    ) {
-        // 3. 在 FlowRow 中，我们使用普通的 forEach 循环来遍历
-        categories.forEach { category ->
-            // CategoryIcon 组件本身不需要任何改动
-            CategoryIcon(
-                category = category,
-                isSelected = category == selectedCategory,
-                onClick = { onCategorySelected(category) }
-            )
+    // 3. 创建并记住 Pager 的状态，它能告诉我们当前在哪一页
+    val pagerState = rememberPagerState(pageCount = { paginatedCategories.size })
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // 4. 使用 HorizontalPager 组件
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            // Pager 的每一页内容
+            // 我们在每一页内部使用 FlowRow 来将10个图标排列成两行
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 5
+            ) {
+                // 获取当前页的分类数据
+                paginatedCategories[page].forEach { category ->
+                    CategoryIcon(
+                        category = category,
+                        isSelected = category == selectedCategory,
+                        onClick = { onCategorySelected(category) }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 5. 添加下方的页面指示器 (小圆点)
+        Row(
+            Modifier.height(20.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(pagerState.pageCount) { iteration ->
+                val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else Color.LightGray
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .size(8.dp)
+                )
+            }
         }
     }
 }
