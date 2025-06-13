@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +40,40 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// 这个数据类定义了交易列表“单行”所需的所有信息
+data class TransactionItem(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: androidx.compose.ui.graphics.Color,
+    val category: String,
+    val description: String,
+    val amount: String
+)
+
+// 创建一个假的交易列表数据
+val dummyTransactions = listOf(
+    TransactionItem(
+        icon = Icons.Filled.ShoppingCart,
+        color = Color(0xFF4CAF50), // 绿色
+        category = "购物",
+        description = "充电模块",
+        amount = "¥ 39.96"
+    ),
+    TransactionItem(
+        icon = Icons.Filled.Restaurant, // 我们用 Restaurant 图标代替碗
+        color = Color(0xFF2196F3), // 蓝色
+        category = "三餐",
+        description = "午餐",
+        amount = "¥ 12.00"
+    ),
+    TransactionItem(
+        icon = Icons.Filled.ShoppingCart,
+        color = Color(0xFF4CAF50), // 绿色
+        category = "购物",
+        description = "鼠标",
+        amount = "¥ 12.90"
+    )
+)
 
 @Composable
 fun SummaryCard() {
@@ -98,6 +136,40 @@ fun SummaryCard() {
 }
 
 @Composable
+fun TransactionRow(item: TransactionItem, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 16.dp), // 设置item的内外边距
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 左侧的圆形图标
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(item.color.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = item.icon, contentDescription = item.category, tint = item.color)
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // 中间的分类和描述
+        Column(modifier = Modifier.weight(1f)) { // weight(1f)让它占据所有剩余空间
+            Text(text = item.category, fontWeight = FontWeight.Bold)
+            Text(text = item.description, color = Color.Gray, fontSize = 14.sp)
+        }
+
+        // 右侧的金额
+        Text(text = item.amount, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+    }
+}
+
+
+
+@Composable
 fun SummaryItem(title: String, amount: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -133,6 +205,14 @@ fun SummaryCardPreview() {
     // AccountingAppTheme {
     SummaryCard()
     // }
+}
+
+// 同样，为这个小组件创建一个独立的预览
+@Preview(showBackground = true)
+@Composable
+fun TransactionRowPreview() {
+    // 把我们的第一条假数据传进去看看效果
+    TransactionRow(item = dummyTransactions[0])
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -177,6 +257,15 @@ fun MainContent(paddingValues: PaddingValues) {
         SummaryCard()
 
         // TODO: 之后在这里添加交易明细列表
+        // 使用 LazyColumn 来创建一个垂直滚动的列表
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            // items 是一个辅助函数，它会遍历你提供的数据列表
+            // 并为每一项数据调用你指定的 Composable 函数
+            items(items = dummyTransactions) { item ->
+                // 现在 lambda 表达式里的 `item` 就是我们想要的 TransactionItem 对象了
+                TransactionRow(item = item)
+            }
+        }
     }
 }
 
