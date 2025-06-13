@@ -78,16 +78,44 @@ fun AddTransactionScreen(
     // 为输入金额和选择分类创建状态
     var amount by remember { mutableStateOf("0") }
     var selectedCategory by remember { mutableStateOf(dummyCategories.first()) }
+    // --- 状态定义 ---
+    var notes by remember { mutableStateOf("") } // <-- 新增：备注的状态
+    var selectedTabIndex by remember { mutableStateOf(1) } // <-- 新增：Tab 的状态 (0=收入, 1=支出)
+    val tabTitles = listOf("收入", "支出")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* 暂时留空，之后做收入/支出切换 */ },
+                title = {
+                    // --- 1. 将 TabRow 放入 TopAppBar 的标题区域 ---
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = MaterialTheme.colorScheme.primary, // 让 TabRow 背景和顶栏颜色一致
+                        contentColor = Color.White // Tab 文字颜色
+                    ) {
+                        tabTitles.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = { Text(title) }
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                     }
-                }
+                },
+                // --- 2. 使用 actions 槽位来放置右侧的日期 ---
+                actions = {
+                    TextButton(onClick = { /* TODO: 打开日期选择器 */ }) {
+                        Text("06 / 13", color = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     ) { paddingValues ->
@@ -134,6 +162,23 @@ fun AddTransactionScreen(
                     selectedCategory = category
                 }
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- 3. 添加备注输入框 ---
+            TextField(
+                value = notes,
+                onValueChange = { notes = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                label = { Text("备注/图片") },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
 
             // 这个 Spacer 会占据所有剩余空间，把键盘推到底部
             Spacer(modifier = Modifier.weight(1f))
@@ -144,6 +189,7 @@ fun AddTransactionScreen(
                     .fillMaxWidth()
                     .height(240.dp), // 给键盘一个固定的高度
                 onDigitClick = { digit ->
+                    // 👇 这是修正后的、干净的 onDigitClick 逻辑
                     if (amount == "0") {
                         amount = digit
                     } else {
@@ -274,7 +320,7 @@ fun CategoryIcon(
 fun KeypadButton(
     // RowScope 是为了方便在 Row 中使用 weight 等修饰符
     modifier: Modifier = Modifier,
-    onClick: () -> Unit,
+    onClick:   () -> Unit,
     content: @Composable () -> Unit
 ) {
     Surface(
@@ -293,6 +339,7 @@ fun KeypadButton(
 @Composable
 fun CustomKeypad(
     modifier: Modifier = Modifier,
+    // 👇 这里的 onDigitClick 参数不应该是 @Composable
     onDigitClick: (String) -> Unit,
     onBackspaceClick: () -> Unit,
     onDecimalClick: () -> Unit,
@@ -306,7 +353,7 @@ fun CustomKeypad(
             KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("1") }) { Text("1", fontSize = 20.sp) }
             KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("2") }) { Text("2", fontSize = 20.sp) }
             KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("3") }) { Text("3", fontSize = 20.sp) }
-            KeypadButton(modifier = Modifier.weight(1f), onClick = onBackspaceClick) { Icon(Icons.Default.Backspace, "删除") }
+            KeypadButton(modifier = Modifier.weight(1f), onClick = onBackspaceClick) { Icon(Icons.AutoMirrored.Filled.Backspace, "删除") }
         }
         // 第二行: 4, 5, 6, +
         Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -316,8 +363,8 @@ fun CustomKeypad(
             KeypadButton(modifier = Modifier.weight(1f), onClick = onAddClick) { Icon(Icons.Default.Add, "加") }
         }
         // 第三、四行
-        Row(modifier = Modifier.fillMaxWidth().weight(2f)) { // 这一行占据两倍高度
-            Column(modifier = Modifier.weight(3f)) { // 左侧 3/4 区域
+        Row(modifier = Modifier.fillMaxWidth().weight(2f)) {
+            Column(modifier = Modifier.weight(3f)) {
                 Row(modifier = Modifier.weight(1f)) {
                     KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("7") }) { Text("7", fontSize = 20.sp) }
                     KeypadButton(modifier = Modifier.weight(1f), onClick = { onDigitClick("8") }) { Text("8", fontSize = 20.sp) }
@@ -329,9 +376,9 @@ fun CustomKeypad(
                     KeypadButton(modifier = Modifier.weight(1f), onClick = onDecimalClick) { Text(".", fontSize = 20.sp) }
                 }
             }
-            // 右侧 1/4 区域，高高的“保存”按钮
+            // 右侧 “保存”按钮
             KeypadButton(
-                modifier = Modifier.weight(1f).fillMaxHeight(), // 占据剩余宽度和所有高度
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 onClick = onSaveClick
             ) {
                 Text("保存", fontSize = 20.sp)
