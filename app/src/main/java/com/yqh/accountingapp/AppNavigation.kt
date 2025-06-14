@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yqh.accountingapp.ui.features.accounts.AccountsScreen
+import com.yqh.accountingapp.ui.features.add_account.AddAccountScreen
 import com.yqh.accountingapp.ui.features.add_transaction.AddTransactionScreen
 import com.yqh.accountingapp.ui.features.main.MainScreen
 
@@ -25,6 +27,9 @@ fun AppNavigation() {
                     Log.d("NavigationCheck", "FAB clicked, navigating to add_transaction")
                     // 当需要跳转时，调用 navigate 函数
                     navController.navigate("add_transaction")
+                },
+                onNavigateToAccounts = { // <-- 添加这个缺失的参数
+                    navController.navigate("accounts")
                 }
             )
         }
@@ -37,6 +42,21 @@ fun AppNavigation() {
                     // popBackStack() 是官方的返回上一页的方法
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // 👇 新增：账户页路由
+        composable("accounts") {
+            AccountsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddAccount = { navController.navigate("add_account") }
+            )
+        }
+
+        // 👇 新增：新增账户页路由
+        composable("add_account") {
+            AddAccountScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

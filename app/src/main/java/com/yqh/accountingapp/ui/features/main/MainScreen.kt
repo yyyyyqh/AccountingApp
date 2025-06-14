@@ -359,7 +359,8 @@ fun TransactionRowPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToAddTransaction: () -> Unit
+    onNavigateToAddTransaction: () -> Unit,
+    onNavigateToAccounts: () -> Unit // <-- 新增这个参数
 ) {
     // 1. 创建并记住抽屉的状态 (打开/关闭)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -371,7 +372,7 @@ fun MainScreen(
         drawerState = drawerState,
         drawerContent = {
             // 4. 将我们创建的 AppDrawer 作为抽屉的内容
-            AppDrawer()
+            AppDrawer(onNavigateToAccounts = onNavigateToAccounts)
         }
     ) {
         // ModalNavigationDrawer 的主内容区域，就是我们之前的 Scaffold
@@ -463,12 +464,17 @@ fun MainContent(paddingValues: PaddingValues) {
 fun MainScreenPreview() {
     // 建议在预览时包裹一层主题，以确保颜色、字体等样式正确
     // MaterialTheme { // 假设你有一个主题设置
-    MainScreen(onNavigateToAddTransaction = {})
+    MainScreen(
+        onNavigateToAddTransaction = {},
+        onNavigateToAccounts = {}
+    )
     // }
 }
 
 @Composable
-fun AppDrawer() {
+fun AppDrawer(
+    onNavigateToAccounts: () -> Unit // <-- 新增这个参数
+) {
     ModalDrawerSheet {
         // 抽屉顶部的 Header 部分
         Box(
@@ -500,7 +506,7 @@ fun AppDrawer() {
         NavigationDrawerItem(
             label = { Text("账本") },
             selected = false,
-            onClick = { /* TODO */ },
+            onClick = onNavigateToAccounts,
             icon = { Icon(Icons.Default.Book, contentDescription = "账本") }, // 假设有 Book 图标
             badge = { Text("日常") } // 右侧的文字
         )
