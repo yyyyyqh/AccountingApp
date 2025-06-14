@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yqh.accountingapp.data.dummyTransactions
+import com.yqh.accountingapp.ui.features.main.TransactionRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +58,31 @@ fun ReportsScreen(onNavigateBack: () -> Unit) {
             DonutChartPlaceholder()
 
             // TODO: 在这里添加下方的列表
+            // --- 👇 以下是新添加的部分 ---
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 支出排行榜标题
+            Text("支出排行榜", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 支出列表
+            Column {
+                // 我们在这里复用 MainScreen 的假数据和 TransactionRow
+                dummyTransactions.forEach { transaction ->
+                    TransactionRow(item = transaction)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 查看更多按钮
+            TextButton(
+                onClick = { /*TODO*/ },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("查看更多 >>")
+            }
         }
     }
 }

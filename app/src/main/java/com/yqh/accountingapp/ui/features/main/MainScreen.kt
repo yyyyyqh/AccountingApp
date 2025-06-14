@@ -70,108 +70,112 @@ import androidx.compose.ui.res.painterResource
 import com.yqh.accountingapp.R
 import kotlinx.coroutines.launch
 
+import com.yqh.accountingapp.data.TransactionItem
+import com.yqh.accountingapp.data.groupedTransactions
+import com.yqh.accountingapp.data.dummyTransactions
 
-// 这个数据类定义了交易列表“单行”所需的所有信息
-data class TransactionItem(
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: androidx.compose.ui.graphics.Color,
-    val category: String,
-    val description: String,
-    val amount: String
-)
 
-// 创建一个假的交易列表数据
-val dummyTransactions = listOf(
-    TransactionItem(
-        icon = Icons.Filled.ShoppingCart,
-        color = Color(0xFF4CAF50), // 绿色
-        category = "购物",
-        description = "充电模块",
-        amount = "¥ 39.96"
-    ),
-    TransactionItem(
-        icon = Icons.Filled.Restaurant, // 我们用 Restaurant 图标代替碗
-        color = Color(0xFF2196F3), // 蓝色
-        category = "三餐",
-        description = "午餐",
-        amount = "¥ 12.00"
-    ),
-    TransactionItem(
-        icon = Icons.Filled.ShoppingCart,
-        color = Color(0xFF4CAF50), // 绿色
-        category = "购物",
-        description = "鼠标",
-        amount = "¥ 12.90"
-    )
-)
+//// 这个数据类定义了交易列表“单行”所需的所有信息
+//data class TransactionItem(
+//    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+//    val color: androidx.compose.ui.graphics.Color,
+//    val category: String,
+//    val description: String,
+//    val amount: String
+//)
 
-private val groupedTransactions = mapOf(
-    "06 / 13 周五" to listOf(
-        TransactionItem(
-            icon = Icons.Filled.Restaurant,
-            color = Color(0xFF2196F3), // 蓝色
-            category = "三餐",
-            description = "午餐",
-            amount = "¥ 12.00"
-        ),
-        TransactionItem(
-            icon = Icons.Filled.Restaurant,
-            color = Color(0xFF2196F3),
-            category = "三餐",
-            description = "晚餐",
-            amount = "¥ 23.50"
-        )
-    ),
-    "06 / 12 周四" to listOf(
-        TransactionItem(
-            icon = Icons.Filled.ShoppingCart,
-            color = Color(0xFF4CAF50), // 绿色
-            category = "购物",
-            description = "充电模块",
-            amount = "¥ 39.96"
-        ),
-        TransactionItem(
-            icon = Icons.Filled.ShoppingCart,
-            color = Color(0xFF4CAF50),
-            category = "购物",
-            description = "鼠标保护壳",
-            amount = "¥ 12.90"
-        )
-    ),
-    // --- 以下是新添加的内容 ---
-    "06 / 11 周三" to listOf(
-        TransactionItem(
-            icon = Icons.Filled.DirectionsBus, // 用公交车图标代表交通
-            color = Color(0xFFFF9800), // 橙色
-            category = "交通",
-            description = "地铁",
-            amount = "¥ 4.00"
-        ),
-        TransactionItem(
-            icon = Icons.Filled.Theaters, // 用影院图标代表娱乐
-            color = Color(0xFFE91E63), // 粉色
-            category = "娱乐",
-            description = "电影票",
-            amount = "¥ 45.00"
-        ),
-        TransactionItem(
-            icon = Icons.Filled.Restaurant,
-            color = Color(0xFF2196F3),
-            category = "三餐",
-            description = "早餐",
-            amount = "¥ 8.50"
-        )
-    ),
-    "06 / 10 周二" to listOf(
-        TransactionItem(
-            icon = Icons.Filled.Home, // 用房子图标代表居家
-            color = Color(0xFF795548), // 棕色
-            category = "居家",
-            description = "水电费",
-            amount = "¥ 150.20"
-        )
-    )
-)
+//// 创建一个假的交易列表数据
+//val dummyTransactions = listOf(
+//    TransactionItem(
+//        icon = Icons.Filled.ShoppingCart,
+//        color = Color(0xFF4CAF50), // 绿色
+//        category = "购物",
+//        description = "充电模块",
+//        amount = "¥ 39.96"
+//    ),
+//    TransactionItem(
+//        icon = Icons.Filled.Restaurant, // 我们用 Restaurant 图标代替碗
+//        color = Color(0xFF2196F3), // 蓝色
+//        category = "三餐",
+//        description = "午餐",
+//        amount = "¥ 12.00"
+//    ),
+//    TransactionItem(
+//        icon = Icons.Filled.ShoppingCart,
+//        color = Color(0xFF4CAF50), // 绿色
+//        category = "购物",
+//        description = "鼠标",
+//        amount = "¥ 12.90"
+//    )
+//)
+
+//private val groupedTransactions = mapOf(
+//    "06 / 13 周五" to listOf(
+//        TransactionItem(
+//            icon = Icons.Filled.Restaurant,
+//            color = Color(0xFF2196F3), // 蓝色
+//            category = "三餐",
+//            description = "午餐",
+//            amount = "¥ 12.00"
+//        ),
+//        TransactionItem(
+//            icon = Icons.Filled.Restaurant,
+//            color = Color(0xFF2196F3),
+//            category = "三餐",
+//            description = "晚餐",
+//            amount = "¥ 23.50"
+//        )
+//    ),
+//    "06 / 12 周四" to listOf(
+//        TransactionItem(
+//            icon = Icons.Filled.ShoppingCart,
+//            color = Color(0xFF4CAF50), // 绿色
+//            category = "购物",
+//            description = "充电模块",
+//            amount = "¥ 39.96"
+//        ),
+//        TransactionItem(
+//            icon = Icons.Filled.ShoppingCart,
+//            color = Color(0xFF4CAF50),
+//            category = "购物",
+//            description = "鼠标保护壳",
+//            amount = "¥ 12.90"
+//        )
+//    ),
+//    // --- 以下是新添加的内容 ---
+//    "06 / 11 周三" to listOf(
+//        TransactionItem(
+//            icon = Icons.Filled.DirectionsBus, // 用公交车图标代表交通
+//            color = Color(0xFFFF9800), // 橙色
+//            category = "交通",
+//            description = "地铁",
+//            amount = "¥ 4.00"
+//        ),
+//        TransactionItem(
+//            icon = Icons.Filled.Theaters, // 用影院图标代表娱乐
+//            color = Color(0xFFE91E63), // 粉色
+//            category = "娱乐",
+//            description = "电影票",
+//            amount = "¥ 45.00"
+//        ),
+//        TransactionItem(
+//            icon = Icons.Filled.Restaurant,
+//            color = Color(0xFF2196F3),
+//            category = "三餐",
+//            description = "早餐",
+//            amount = "¥ 8.50"
+//        )
+//    ),
+//    "06 / 10 周二" to listOf(
+//        TransactionItem(
+//            icon = Icons.Filled.Home, // 用房子图标代表居家
+//            color = Color(0xFF795548), // 棕色
+//            category = "居家",
+//            description = "水电费",
+//            amount = "¥ 150.20"
+//        )
+//    )
+//)
 
 @Composable
 fun SummaryCard(balance: String, income: String, expense: String) {
