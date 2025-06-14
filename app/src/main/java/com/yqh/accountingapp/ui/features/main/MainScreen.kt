@@ -1,6 +1,7 @@
 package com.yqh.accountingapp.ui.features.main
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,9 +47,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.foundation.clickable // 👈 新增 import
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.NightsStay
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.* // 👈 新增 import
 import androidx.compose.material3.DropdownMenu // 👈 新增 import
 import androidx.compose.material3.DropdownMenuItem // 👈 新增 import
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.yqh.accountingapp.R
+import kotlinx.coroutines.launch
 
 
 // 这个数据类定义了交易列表“单行”所需的所有信息
@@ -339,25 +359,58 @@ fun TransactionRowPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToAddTransaction: () -> Unit // 这是我们需要的、正确的 MainScreen 版本
+    onNavigateToAddTransaction: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("2025 / 06") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToAddTransaction) { // onClick 事件被正确设置
-                Icon(Icons.Filled.Add, contentDescription = "添加交易")
-            }
+    // 1. 创建并记住抽屉的状态 (打开/关闭)
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    // 2. 创建一个协程作用域，用于异步打开抽屉
+    val scope = rememberCoroutineScope()
+
+    // 3. 使用 ModalNavigationDrawer 作为最外层容器
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            // 4. 将我们创建的 AppDrawer 作为抽屉的内容
+            AppDrawer()
         }
-    ) { innerPadding ->
-        MainContent(paddingValues = innerPadding)
+    ) {
+        // ModalNavigationDrawer 的主内容区域，就是我们之前的 Scaffold
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("2025 / 06") },
+                    // 5. 添加汉堡菜单按钮作为导航图标
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            // 点击时，使用协程打开抽屉
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }) {
+                            Icon(Icons.Default.Menu, contentDescription = "打开菜单")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    ),
+                    // 👇 右侧的“更多”图标
+                    actions = {
+                        IconButton(onClick = { /* TODO */ }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "更多选项", tint = Color.White)
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = onNavigateToAddTransaction) {
+                    Icon(Icons.Filled.Add, contentDescription = "添加交易")
+                }
+            }
+        ) { innerPadding ->
+            MainContent(paddingValues = innerPadding)
+        }
     }
 }
 
@@ -412,4 +465,79 @@ fun MainScreenPreview() {
     // MaterialTheme { // 假设你有一个主题设置
     MainScreen(onNavigateToAddTransaction = {})
     // }
+}
+
+@Composable
+fun AppDrawer() {
+    ModalDrawerSheet {
+        // 抽屉顶部的 Header 部分
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.drawer_header_background), // 假设你有一张背景图
+                contentDescription = "抽屉背景",
+                contentScale = ContentScale.Crop, // 裁剪图片以填充
+                modifier = Modifier.fillMaxSize()
+            )
+            Text(
+                text = "登录账号",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // --- 菜单项 ---
+        // 为了演示，我们只创建几个关键的
+        NavigationDrawerItem(
+            label = { Text("账本") },
+            selected = false,
+            onClick = { /* TODO */ },
+            icon = { Icon(Icons.Default.Book, contentDescription = "账本") }, // 假设有 Book 图标
+            badge = { Text("日常") } // 右侧的文字
+        )
+        NavigationDrawerItem(
+            label = { Text("账户") },
+            selected = false,
+            onClick = { /* TODO */ },
+            icon = { Icon(Icons.Default.AccountBalanceWallet, contentDescription = "账户") }
+        )
+        NavigationDrawerItem(
+            label = { Text("报表") },
+            selected = false,
+            onClick = { /* TODO */ },
+            icon = { Icon(Icons.Default.BarChart, contentDescription = "报表") }
+        )
+
+        Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+        // --- 带开关的菜单项 ---
+        var isNightMode by remember { mutableStateOf(false) }
+        NavigationDrawerItem(
+            label = { Text("夜间") },
+            selected = false,
+            onClick = { isNightMode = !isNightMode },
+            icon = { Icon(Icons.Default.NightsStay, contentDescription = "夜间模式") },
+            badge = { // 在右侧的 badge 位置放一个 Switch 开关
+                Switch(
+                    checked = isNightMode,
+                    onCheckedChange = { isNightMode = it }
+                )
+            }
+        )
+        NavigationDrawerItem(
+            label = { Text("设置") },
+            selected = false,
+            onClick = { /* TODO */ },
+            icon = { Icon(Icons.Default.Settings, contentDescription = "设置") }
+        )
+    }
 }
