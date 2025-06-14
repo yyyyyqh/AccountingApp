@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 
+import androidx.compose.animation.core.Animatable // 👈 新增 import
+import androidx.compose.animation.core.tween // 👈 新增 import
+
 
 // --- 新增的数据模型和假数据 ---
 
@@ -139,6 +142,20 @@ fun BudgetSummaryRow(summary: BudgetOverallSummary) {
 // 2. 列表中带进度条的单行预算
 @Composable
 fun BudgetItemRow(item: BudgetItem) {
+
+    // 1. 创建一个 Animatable，并将它的初始值设为 1.0f (100%)
+    val animatedProgress = remember { Animatable(1f) }
+
+    // 2. 使用 LaunchedEffect，当 item.progress (我们的目标值) 发生变化时，启动动画
+    LaunchedEffect(item.progress) {
+        // 让 animatedProgress 的值，以动画的形式，从当前值（初始是1f）变化到目标值
+        animatedProgress.animateTo(
+            targetValue = item.progress,
+            // 定义动画规格：这里我们使用 tween 动画，持续1秒
+            animationSpec = tween(durationMillis = 1000)
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,7 +177,7 @@ fun BudgetItemRow(item: BudgetItem) {
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 LinearProgressIndicator(
-                    progress = { item.progress },
+                    progress = { animatedProgress.value },
                     modifier = Modifier.fillMaxWidth(),
                     trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                     color = item.color
