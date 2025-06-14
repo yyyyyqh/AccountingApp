@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.yqh.accountingapp.ui.features.accounts.AccountsScreen
 import com.yqh.accountingapp.ui.features.add_account.AddAccountScreen
 import com.yqh.accountingapp.ui.features.add_transaction.AddTransactionScreen
+import com.yqh.accountingapp.ui.features.budget.BudgetScreen
 import com.yqh.accountingapp.ui.features.main.MainScreen
 import com.yqh.accountingapp.ui.features.reports.ReportsScreen
 
@@ -34,8 +35,10 @@ fun AppNavigation() {
                 },
                 onNavigateToReports = {
                     navController.navigate("reports")
-                } // 👈 传递事件
-
+                }, // 👈 传递事件
+                onNavigateToBudget = {
+                    navController.navigate("budget")
+                }, // 👈 传递事件
             )
         }
 
@@ -68,6 +71,13 @@ fun AppNavigation() {
         // 👇 新增报表页的路由
         composable("reports") {
             ReportsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 👇 新增预算页的路由
+        composable("budget") {
+            BudgetScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

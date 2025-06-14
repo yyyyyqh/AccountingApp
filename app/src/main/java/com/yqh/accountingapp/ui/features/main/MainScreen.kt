@@ -50,6 +50,7 @@ import androidx.compose.foundation.clickable // 👈 新增 import
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NightsStay
@@ -365,7 +366,8 @@ fun TransactionRowPreview() {
 fun MainScreen(
     onNavigateToAddTransaction: () -> Unit,
     onNavigateToAccounts: () -> Unit, // <-- 新增这个参数
-    onNavigateToReports: () -> Unit
+    onNavigateToReports: () -> Unit,
+    onNavigateToBudget: () -> Unit
 ) {
     // 1. 创建并记住抽屉的状态 (打开/关闭)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -377,7 +379,11 @@ fun MainScreen(
         drawerState = drawerState,
         drawerContent = {
             // 4. 将我们创建的 AppDrawer 作为抽屉的内容
-            AppDrawer(onNavigateToAccounts = onNavigateToAccounts, onNavigateToReports=onNavigateToReports)
+            AppDrawer(
+                onNavigateToAccounts = onNavigateToAccounts,
+                onNavigateToReports=onNavigateToReports,
+                onNavigateToBudget=onNavigateToBudget
+                )
         }
     ) {
         // ModalNavigationDrawer 的主内容区域，就是我们之前的 Scaffold
@@ -472,15 +478,18 @@ fun MainScreenPreview() {
     MainScreen(
         onNavigateToAddTransaction = {},
         onNavigateToAccounts = {},
-        onNavigateToReports = {}
+        onNavigateToReports = {},
+        onNavigateToBudget = {}
     )
     // }
 }
 
 @Composable
 fun AppDrawer(
-    onNavigateToAccounts: () -> Unit, // <-- 新增这个参数
-    onNavigateToReports: () -> Unit // 👈 新增参数
+    onNavigateToAccounts: () -> Unit,
+    onNavigateToReports: () -> Unit,
+    onNavigateToBudget: () -> Unit // <-- 新增参数
+
 ) {
     ModalDrawerSheet {
         // 抽屉顶部的 Header 部分
@@ -528,6 +537,12 @@ fun AppDrawer(
             selected = false,
             onClick = onNavigateToReports,
             icon = { Icon(Icons.Default.BarChart, contentDescription = "报表") }
+        )
+        NavigationDrawerItem(
+            label = { Text("预算") },
+            selected = false,
+            onClick = onNavigateToBudget, // <-- 在这里使用
+            icon = { Icon(Icons.Default.HourglassEmpty, contentDescription = "预算") }
         )
 
         Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
