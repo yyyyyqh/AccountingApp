@@ -10,6 +10,7 @@ import com.yqh.accountingapp.ui.features.accounts.AccountsScreen
 import com.yqh.accountingapp.ui.features.add_account.AddAccountScreen
 import com.yqh.accountingapp.ui.features.add_transaction.AddTransactionScreen
 import com.yqh.accountingapp.ui.features.main.MainScreen
+import com.yqh.accountingapp.ui.features.reports.ReportsScreen
 
 @Composable
 fun AppNavigation() {
@@ -30,7 +31,11 @@ fun AppNavigation() {
                 },
                 onNavigateToAccounts = { // <-- 添加这个缺失的参数
                     navController.navigate("accounts")
-                }
+                },
+                onNavigateToReports = {
+                    navController.navigate("reports")
+                } // 👈 传递事件
+
             )
         }
 
@@ -59,5 +64,13 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        // 👇 新增报表页的路由
+        composable("reports") {
+            ReportsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
+
