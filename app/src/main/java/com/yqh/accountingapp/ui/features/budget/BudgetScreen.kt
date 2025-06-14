@@ -65,14 +65,17 @@ val sampleBudgetItems = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetScreen(onNavigateBack: () -> Unit) {
-    // 👇 1. 创建一个状态来控制显示哪个视图
-    var showSampleData by remember { mutableStateOf(false) }
+    // 1. 创建一个状态来持有预算列表，初始为空
+    var budgetItems by remember { mutableStateOf<List<BudgetItem>>(emptyList()) }
+
+    // 2. 创建一个状态来判断当前是否显示的是示例数据
+    var isShowingSamples by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             // 👇 补上这部分
             TopAppBar(
-                title = { Text("2025 / 06") },
+                title = { Text("随机值会变吗?") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -83,13 +86,44 @@ fun BudgetScreen(onNavigateBack: () -> Unit) {
         bottomBar = {
             Button(
                 // 👇 2. 按钮的点击事件现在用来切换状态
-                onClick = { showSampleData = !showSampleData },
+                onClick = {
+                    // 3. 点击按钮时，切换显示状态
+                    isShowingSamples = !isShowingSamples
+                    if (isShowingSamples) {
+                        // --- 👇 这是关键的修正 ---
+                        // 如果是要显示，就动态生成一组完全随机的数据
+                        val random = java.util.Random()
+                        budgetItems = sampleBudgetItems.map { oldItem ->
+                            val budget = random.nextInt(2000) + 3000 // 生成 3000-5000 的随机预算
+                            val progress = (random.nextInt(80) + 10) / 100f // 生成 10%-90% 的随机进度
+                            val remaining = (budget * progress).toInt()
+
+                            // 返回一个包含全新随机数据的新 BudgetItem
+                            oldItem.copy(
+                                remainingAmount = "¥ $remaining",
+                                budgetAmount = "¥ $budget",
+                                progress = progress
+                            )
+                        }
+//                        // 如果是要显示，就生成一组新的、带随机进度的预算项
+//                        budgetItems = listOf(
+//                            BudgetItem("月预算", Icons.Default.AccountBalance, Color.Gray, "¥ 2000", "¥ 5000", (20..80).random() / 100f),
+//                            BudgetItem("三餐", Icons.Default.Fastfood, Color(0xFF2196F3), "¥ 2276", "¥ 2797", (10..30).random() / 100f),
+//                            BudgetItem("购物", Icons.Default.ShoppingCart, Color(0xFF4CAF50), "¥ 2385", "¥ 2476", (5..15).random() / 100f),
+//                            BudgetItem("住房", Icons.Default.Home, Color(0xFF795548), "¥ 2091", "¥ 2328", (5..20).random() / 100f),
+//                            BudgetItem("交通", Icons.Default.DirectionsBus, Color(0xFFFF9800), "¥ 1650", "¥ 2287", (20..40).random() / 100f)
+//                        )
+                    } else {
+                        // 如果是隐藏，就清空列表
+                        budgetItems = emptyList()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
                 // 👇 3. 按钮的文字也根据状态变化
                 Text(
-                    text = if (showSampleData) "隐藏示例数据" else "查看示例数据",
+                    text = if (isShowingSamples) "隐藏示例数据" else "查看示例数据",
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
@@ -101,11 +135,11 @@ fun BudgetScreen(onNavigateBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // 👇 4. 根据状态，决定显示哪个内容
-            if (showSampleData) {
-                BudgetListContent() // 有数据时的视图
+            // 4. 根据列表是否为空，决定显示哪个内容
+            if (budgetItems.isEmpty()) {
+                BudgetEmptyContent() // 列表为空时，显示空状态
             } else {
-                BudgetEmptyContent() // 空状态时的视图
+                BudgetListContent(items = budgetItems) // 列表有数据时，显示列表
             }
         }
     }
@@ -143,15 +177,31 @@ fun BudgetSummaryRow(summary: BudgetOverallSummary) {
 @Composable
 fun BudgetItemRow(item: BudgetItem) {
 
-    // 1. 创建一个 Animatable，并将它的初始值设为 1.0f (100%)
-    val animatedProgress = remember { Animatable(1f) }
+//    // 1. 创建一个 Animatable，并将它的初始值设为 1.0f (100%)
+//    val animatedProgress = remember { Animatable(1f) }
+//
+//    // 2. 使用 LaunchedEffect，当 item.progress (我们的目标值) 发生变化时，启动动画
+//    LaunchedEffect(item.progress) {
+//        // 让 animatedProgress 的值，以动画的形式，从当前值（初始是1f）变化到目标值
+//        animatedProgress.animateTo(
+//            targetValue = item.progress,
+//            // 定义动画规格：这里我们使用 tween 动画，持续1秒
+//            animationSpec = tween(durationMillis = 1000)
+//        )
+//    }
+    // 初始值设为当前的 progress 即可
+    val animatedProgress = remember { Animatable(item.progress) }
 
-    // 2. 使用 LaunchedEffect，当 item.progress (我们的目标值) 发生变化时，启动动画
+    // 当 item.progress (我们的目标值) 发生变化时，这个 LaunchedEffect 会重新启动
     LaunchedEffect(item.progress) {
-        // 让 animatedProgress 的值，以动画的形式，从当前值（初始是1f）变化到目标值
+        // 👇 这是关键的修正
+
+        // 1. 每次动画开始前，先无动画地“跳”到起始点 1.0f (100%)
+        animatedProgress.snapTo(1f)
+
+        // 2. 然后再从 100% 动画到新的目标值
         animatedProgress.animateTo(
             targetValue = item.progress,
-            // 定义动画规格：这里我们使用 tween 动画，持续1秒
             animationSpec = tween(durationMillis = 1000)
         )
     }
@@ -190,24 +240,32 @@ fun BudgetItemRow(item: BudgetItem) {
 @Preview(showBackground = true)
 @Composable
 fun BudgetListContentPreview() {
-    BudgetListContent()
+    BudgetListContent(sampleBudgetItems)
 }
 
 // 3. 将所有组件组合成完整的“有数据”的列表内容
+// 👇 最后，修改 BudgetListContent 函数，让它接收一个列表参数
 @Composable
-fun BudgetListContent() {
+fun BudgetListContent(items: List<BudgetItem>) { // <-- 接收一个参数
     Column {
+        // 这里的 summary 暂时还是静态的，之后也可以变成动态
         BudgetSummaryRow(summary = sampleBudgetSummary)
         Spacer(modifier = Modifier.height(16.dp))
-
         LazyColumn {
-            // 告诉 LazyColumn 列表的总长度
-            items(count = sampleBudgetItems.size) { index ->
+            // --- 使用索引的写法 ---
+            items(
+                count = items.size,
+                // (可选，但推荐) 同样可以提供 key 来优化性能
+                key = { index -> items[index].category }
+            ) { index ->
                 // 在循环体内部，用索引从列表中获取当前项
-                val item = sampleBudgetItems[index]
+                val item = items[index]
+
+                // 调用 BudgetItemRow，和之前一样
                 BudgetItemRow(item = item)
             }
         }
+
     }
 }
 
